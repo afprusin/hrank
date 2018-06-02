@@ -46,30 +46,48 @@ public class TheBombermanGame {
 
 	private static final char BOMB_SYMBOL = 'O';
 	private static final char EMPTY_SYMBOL = '.';
+	private static final int CYCLE_START_ROUND = 5;
+	private static final int ROUNDS_IN_PATTERN_CYCLE = 4;
 
 	// Complete the bomberMan function below.
-	private String getGridAfterRounds(int rounds, String[] grid) {
+	private String getGridAfterRounds(int totalRounds, String[] grid) {
 		Bomb[][] bombGrid = new Bomb[grid.length][grid[0].length()];
+
 		Deque<BombGroup> bombs = new ArrayDeque<>();
 		bombs.addLast(setConvertedBombs(grid, bombGrid));
 
-		int currentRound = 1;
+		totalRounds = calculateEffectiveTotalComputationRounds(totalRounds);
 
-		while(currentRound <= rounds) {
-			final boolean evenRound = currentRound % 2 == 0;
+		int currentRound = 2;
+		while(currentRound <= totalRounds) {
+			final boolean bombPlacementRound = currentRound % 2 == 0;
 
-			// Even round
-			if(evenRound) {
+			// Place bombs
+			if(bombPlacementRound) {
 				bombs.addLast(getBombsPlantedThisRound(bombGrid, currentRound));
 			}
-			// Odd round
-			else if(currentRound >= 3) {
+			// Explode bombs placed three rounds ago
+			else {
 				removeBombsFromGrid(bombGrid, bombs.pop());
 			}
+
 			currentRound++;
 		}
 
 		return getBombGridTextRepresentation(bombGrid);
+	}
+
+	// Via some experimentation, it was determined that bomb placement devolves into a
+	//	cycle that begins with the fifth round, and repeats every four rounds after that
+	private int calculateEffectiveTotalComputationRounds(int totalRounds) {
+		int effectiveRounds = totalRounds;
+
+		if(totalRounds >= CYCLE_START_ROUND) {
+			final int roundsPastFifthRound = (totalRounds - CYCLE_START_ROUND) %
+					ROUNDS_IN_PATTERN_CYCLE;
+			effectiveRounds = CYCLE_START_ROUND + roundsPastFifthRound;
+		}
+		return effectiveRounds;
 	}
 
 	private BombGroup setConvertedBombs(String[] grid, Bomb[][] toSet) {
