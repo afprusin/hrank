@@ -168,9 +168,8 @@ public class TheBombermanGame {
 		return output.toString();
 	}
 
-	//private static final Scanner scanner = new Scanner(System.in);
-	private static final Scanner scanner = new Scanner(TheBombermanGame.class.getResourceAsStream("/TheBombermanGame11"));
-
+	private static final Scanner scanner = new Scanner(System.in);
+	
 	public static void main(String[] args) {
 		new TheBombermanGame().performSolution();
 	}
