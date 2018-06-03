@@ -1,4 +1,4 @@
-package com.ohumbrella.hrank.algorithms.implementation;
+package com.ohumbrella.hrank.algorithms.implementation.determiningdnahealth;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class DeterminingDnaHealth {
+public class DeterminingDnaHealthOriginalImpl {
 
 	private static int getCharAsBaseZeroIndex(char toGet) {
 		return ((int)toGet) - 97;
@@ -117,7 +117,7 @@ public class DeterminingDnaHealth {
 
 	public static void main(String[] args) {
 		for(int i = 0; i < 100; i++)
-		new DeterminingDnaHealth().runSolution();
+		new DeterminingDnaHealthOriginalImpl().runSolution();
 	}
 
 	private void runSolution() {
