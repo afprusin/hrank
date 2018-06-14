@@ -150,7 +150,7 @@ public class MorganAndAString {
 				break;
 			}
 			if( ! second.hasNext(positionsAdvanced)) {
-				break;
+				 break;
 			}
 			if(first.peekNext(positionsAdvanced) < second.peekNext(positionsAdvanced)) {
 				break;
