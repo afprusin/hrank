@@ -23,8 +23,7 @@ public class StringSimilarity {
 	private List<String> getInput() {
 		String inputLine;
 		List<String> lines = new ArrayList<>();
-		//try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/StringSimilarity06")))) {
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
 			int expectedTestcases = Integer.valueOf(reader.readLine().trim());
 			while((inputLine = reader.readLine()) != null) {
 				lines.add(inputLine.trim());
