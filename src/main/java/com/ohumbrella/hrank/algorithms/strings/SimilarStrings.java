@@ -12,41 +12,39 @@ import java.util.stream.Collectors;
 public class SimilarStrings {
 
 	private class TestCases {
-		private String toSearch;
-		private List<String> subString;
+		private int[] toSearch;
+		private List<int[]> subString;
 
-		TestCases(String toSearch, List<String> subString) {
+		TestCases(int[] toSearch, List<int[]> subString) {
 			this.toSearch = toSearch;
 			this.subString = subString;
 		}
 
-		String getToSearch() {
+		int[] getToSearch() {
 			return toSearch;
 		}
 
-		List<String> getSubstrings() {
+		List<int[]> getSubstrings() {
 			return subString;
 		}
 	}
 
 	private class CharacterEquivalents {
 		private static final char UNSET_NULL = '\u0000';
-		private char[] equivalents = new char[10];
-		private char[] reverseEquivalents = new char[10];
+		private int[] equivalents = new int[10];
+		private int[] reverseEquivalents = new int[10];
 
-		boolean compareOrEstablishEquivalent(char i, char j) {
-			final int indexI = getCharactersIndex(i);
-			final int indexJ = getCharactersIndex(j);
+		boolean compareOrEstablishEquivalent(int indexI, int indexJ) {
 			boolean result;
 
 			if(equivalents[indexI] == UNSET_NULL  && reverseEquivalents[indexJ] == UNSET_NULL) {
-				equivalents[indexI] = j;
-				reverseEquivalents[indexJ] = i;
+				equivalents[indexI] = indexJ;
+				reverseEquivalents[indexJ] = indexI;
 				result = true;
 				//System.out.println("Set:" + i + "," + j);
 			}
 			else {
-				result = equivalents[indexI] == j;
+				result = equivalents[indexI] == indexJ;
 				//System.out.println(i + ":" + j + "?" + result);
 			}
 
@@ -57,10 +55,6 @@ public class SimilarStrings {
 			Arrays.fill(equivalents, UNSET_NULL);
 			Arrays.fill(reverseEquivalents, UNSET_NULL);
 		}
-
-		private int getCharactersIndex(char toIndex) {
-			return toIndex - 97;
-		}
 	}
 
 	public static void main(String[] args) {
@@ -70,7 +64,7 @@ public class SimilarStrings {
 	public void performSolution() {
 		TestCases testCases = getInput();
 
-		for(String substring : testCases.getSubstrings()) {
+		for(int[] substring : testCases.getSubstrings()) {
 			System.out.println(getCountOfSimilarStrings(substring, testCases.getToSearch()));
 		}
 //		System.out.println(getCountOfSimilarStrings(testCases.getSubstrings().get(2), testCases.getToSearch()));
@@ -78,19 +72,19 @@ public class SimilarStrings {
 
 	private TestCases getInput() {
 		String inputLine;
-		List<String> substrings = new ArrayList<>();
-		String toSearch;
+		List<int[]> substrings = new ArrayList<>();
+		int[] toSearch;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/SimilarStrings11")))) {
 			//try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
 			final String[] metadata = reader.readLine().trim().split(" ");
-			toSearch = reader.readLine().trim();
+			toSearch = convertInputLineToIndexArray(reader.readLine().trim());
 
 			int expectedTestcases = Integer.valueOf(metadata[1]);
 			while((inputLine = reader.readLine()) != null) {
 				String[] substringIndexes = inputLine.trim().split(" ");
 				final int lowIndex = Integer.valueOf(substringIndexes[0]) - 1;
 				final int highIndex = Integer.valueOf(substringIndexes[1]);
-				substrings.add(toSearch.substring(lowIndex, highIndex));
+				substrings.add(Arrays.copyOfRange(toSearch, lowIndex, highIndex));
 			}
 
 			if(substrings.size() != expectedTestcases) {
@@ -105,12 +99,22 @@ public class SimilarStrings {
 		return new TestCases(toSearch, substrings);
 	}
 
-	private long getCountOfSimilarStrings(String substring, String toSearch) {
+	private int[] convertInputLineToIndexArray(String toConvert) {
+		return toConvert.chars()
+				.map(this::getBaseZeroShiftedCharacterIndexValue)
+				.toArray();
+	}
+
+	private int getBaseZeroShiftedCharacterIndexValue(int toShift) {
+		return toShift - 97;
+	}
+
+	private long getCountOfSimilarStrings(int[] substring, int[] toSearch) {
 		CharacterEquivalents equivalents = new CharacterEquivalents();
 
 		long matchCount = 0;
 
-		for(int i = 0; i <= toSearch.length() - substring.length(); i++) {
+		for(int i = 0; i <= toSearch.length - substring.length; i++) {
 			if(checkSubstringSimilarityAgainstRange(substring, toSearch, i, equivalents)) {
 				matchCount++;
 			}
@@ -120,14 +124,14 @@ public class SimilarStrings {
 	}
 
 	private boolean checkSubstringSimilarityAgainstRange(
-			String subString, String toSearch, int baseSearchIndex, CharacterEquivalents equivalents) {
+			int[] subString, int[] toSearch, int baseSearchIndex, CharacterEquivalents equivalents) {
 
 		equivalents.reset();
 		boolean result = true;
 
-		for(int i = 0; i < subString.length(); i++) {
+		for(int i = 0; i < subString.length; i++) {
 			if( ! equivalents.compareOrEstablishEquivalent(
-					subString.charAt(i), toSearch.charAt(i + baseSearchIndex))) {
+					subString[i], toSearch[i + baseSearchIndex])) {
 				result = false;
 				break;
 			}
