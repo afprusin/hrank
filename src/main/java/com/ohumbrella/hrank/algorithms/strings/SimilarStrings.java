@@ -133,7 +133,7 @@ public class SimilarStrings {
 		long matchCount = 0;
 
 		for(int i = 0; i <= toSearch.length - substringLength; i++) {
-			if(checkSubstringSimilarityAgainstRange(substring, toSearch, i, equivalents)) {
+			if(checkSubstringSimilarityAgainstRange(toSearch, substring.getLowIndex(), i, substringLength, equivalents)) {
 				matchCount++;
 			}
 		}
@@ -141,16 +141,14 @@ public class SimilarStrings {
 		return matchCount;
 	}
 
-	private boolean checkSubstringSimilarityAgainstRange(
-			ArrayRangePair substring, int[] toSearch, int baseSearchIndex, CharacterEquivalents equivalents) {
-		final int substringLength = substring.getHighIndex() - substring.getLowIndex();
+	private boolean checkSubstringSimilarityAgainstRange(int[] toSearch, int substringIndex, int toSearchIndex, int length, CharacterEquivalents equivalents) {
 
 		equivalents.reset();
 		boolean result = true;
 
-		for(int i = 0; i < substringLength; i++) {
+		for(int i = 0; i < length; i++) {
 			if( ! equivalents.areEquivalent(
-					toSearch[substring.getLowIndex() + i], toSearch[i + baseSearchIndex])) {
+					toSearch[substringIndex + i], toSearch[toSearchIndex + i])) {
 				result = false;
 				break;
 			}
@@ -158,6 +156,4 @@ public class SimilarStrings {
 
 		return result;
 	}
-
-
 }
