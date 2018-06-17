@@ -47,14 +47,18 @@ public class SimilarStrings {
 	}
 
 	private class CharacterEquivalents {
-		private static final char UNSET_NULL = '\u0000';
+		private static final int UNSET = -1;
 		private int[] equivalents = new int[10];
 		private int[] reverseEquivalents = new int[10];
+
+		CharacterEquivalents() {
+			reset();
+		}
 
 		boolean areEquivalent(int indexI, int indexJ) {
 			boolean result;
 
-			if(equivalents[indexI] == UNSET_NULL  && reverseEquivalents[indexJ] == UNSET_NULL) {
+			if(equivalents[indexI] == UNSET  && reverseEquivalents[indexJ] == UNSET) {
 				equivalents[indexI] = indexJ;
 				reverseEquivalents[indexJ] = indexI;
 				result = true;
