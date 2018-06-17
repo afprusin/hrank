@@ -31,17 +31,17 @@ public class SimilarStrings {
 		int lowIndex;
 		int highIndex;
 
-		public ArrayRangePair(int lowIndex, int highIndex) {
+		ArrayRangePair(int lowIndex, int highIndex) {
 
 			this.lowIndex = lowIndex;
 			this.highIndex = highIndex;
 		}
 
-		public int getLowIndex() {
+		int getLowIndex() {
 			return lowIndex;
 		}
 
-		public int getHighIndex() {
+		int getHighIndex() {
 			return highIndex;
 		}
 	}
@@ -58,11 +58,9 @@ public class SimilarStrings {
 				equivalents[indexI] = indexJ;
 				reverseEquivalents[indexJ] = indexI;
 				result = true;
-				//System.out.println("Set:" + i + "," + j);
 			}
 			else {
 				result = equivalents[indexI] == indexJ;
-				//System.out.println(i + ":" + j + "?" + result);
 			}
 
 			return result;
@@ -86,7 +84,7 @@ public class SimilarStrings {
 			output.append(getCountOfSimilarStrings(substring, testCases.getToSearch()));
 			output.append(System.lineSeparator());
 		}
-		System.out.println(output);
+		System.out.println(output.toString());
 	}
 
 	private TestCases getInput() {
@@ -157,8 +155,6 @@ public class SimilarStrings {
 				break;
 			}
 		}
-
-		//System.out.println(subString + " : " + toSearch.substring(baseSearchIndex, subString.length() + baseSearchIndex) + " : " + result);
 
 		return result;
 	}
