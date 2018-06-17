@@ -3,6 +3,7 @@ package com.ohumbrella.hrank.algorithms.strings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,9 +14,9 @@ public class SimilarStrings {
 
 	private class TestCases {
 		private int[] toSearch;
-		private List<int[]> subString;
+		private List<ArrayRangePair> subString;
 
-		TestCases(int[] toSearch, List<int[]> subString) {
+		TestCases(int[] toSearch, List<ArrayRangePair> subString) {
 			this.toSearch = toSearch;
 			this.subString = subString;
 		}
@@ -24,8 +25,27 @@ public class SimilarStrings {
 			return toSearch;
 		}
 
-		List<int[]> getSubstrings() {
+		List<ArrayRangePair> getSubstrings() {
 			return subString;
+		}
+	}
+
+	private class ArrayRangePair {
+		int lowIndex;
+		int highIndex;
+
+		public ArrayRangePair(int lowIndex, int highIndex) {
+
+			this.lowIndex = lowIndex;
+			this.highIndex = highIndex;
+		}
+
+		public int getLowIndex() {
+			return lowIndex;
+		}
+
+		public int getHighIndex() {
+			return highIndex;
 		}
 	}
 
@@ -64,7 +84,7 @@ public class SimilarStrings {
 	public void performSolution() {
 		TestCases testCases = getInput();
 
-		for(int[] substring : testCases.getSubstrings()) {
+		for(ArrayRangePair substring : testCases.getSubstrings()) {
 			System.out.println(getCountOfSimilarStrings(substring, testCases.getToSearch()));
 		}
 //		System.out.println(getCountOfSimilarStrings(testCases.getSubstrings().get(2), testCases.getToSearch()));
@@ -72,7 +92,7 @@ public class SimilarStrings {
 
 	private TestCases getInput() {
 		String inputLine;
-		List<int[]> substrings = new ArrayList<>();
+		List<ArrayRangePair> substrings = new ArrayList<>();
 		int[] toSearch;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/SimilarStrings11")))) {
 			//try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
@@ -84,7 +104,7 @@ public class SimilarStrings {
 				String[] substringIndexes = inputLine.trim().split(" ");
 				final int lowIndex = Integer.valueOf(substringIndexes[0]) - 1;
 				final int highIndex = Integer.valueOf(substringIndexes[1]);
-				substrings.add(Arrays.copyOfRange(toSearch, lowIndex, highIndex));
+				substrings.add(new ArrayRangePair(lowIndex, highIndex));
 			}
 
 			if(substrings.size() != expectedTestcases) {
@@ -109,8 +129,10 @@ public class SimilarStrings {
 		return toShift - 97;
 	}
 
-	private long getCountOfSimilarStrings(int[] substring, int[] toSearch) {
+	private long getCountOfSimilarStrings(ArrayRangePair substringRange, int[] toSearch) {
 		CharacterEquivalents equivalents = new CharacterEquivalents();
+		int[] substring = Arrays.copyOfRange(
+				toSearch, substringRange.getLowIndex(), substringRange.getHighIndex());
 
 		long matchCount = 0;
 
