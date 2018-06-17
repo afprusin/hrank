@@ -71,8 +71,8 @@ public class SimilarStrings {
 		}
 
 		void reset() {
-			Arrays.fill(equivalents, UNSET_NULL);
-			Arrays.fill(reverseEquivalents, UNSET_NULL);
+			Arrays.fill(equivalents, UNSET);
+			Arrays.fill(reverseEquivalents, UNSET);
 		}
 	}
 
@@ -95,7 +95,7 @@ public class SimilarStrings {
 		String inputLine;
 		List<ArrayRangePair> substrings = new ArrayList<>();
 		int[] toSearch;
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/SimilarStrings11")))) {
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/SimilarStringsSample")))) {
 			//try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
 			final String[] metadata = reader.readLine().trim().split(" ");
 			toSearch = convertInputLineToIndexArray(reader.readLine().trim());
