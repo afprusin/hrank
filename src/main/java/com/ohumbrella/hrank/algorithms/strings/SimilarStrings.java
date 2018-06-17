@@ -3,12 +3,9 @@ package com.ohumbrella.hrank.algorithms.strings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class SimilarStrings {
 
@@ -54,7 +51,7 @@ public class SimilarStrings {
 		private int[] equivalents = new int[10];
 		private int[] reverseEquivalents = new int[10];
 
-		boolean compareOrEstablishEquivalent(int indexI, int indexJ) {
+		boolean areEquivalent(int indexI, int indexJ) {
 			boolean result;
 
 			if(equivalents[indexI] == UNSET_NULL  && reverseEquivalents[indexJ] == UNSET_NULL) {
@@ -84,10 +81,12 @@ public class SimilarStrings {
 	public void performSolution() {
 		TestCases testCases = getInput();
 
+		StringBuilder output = new StringBuilder();
 		for(ArrayRangePair substring : testCases.getSubstrings()) {
-			System.out.println(getCountOfSimilarStrings(substring, testCases.getToSearch()));
+			output.append(getCountOfSimilarStrings(substring, testCases.getToSearch()));
+			output.append(System.lineSeparator());
 		}
-//		System.out.println(getCountOfSimilarStrings(testCases.getSubstrings().get(2), testCases.getToSearch()));
+		System.out.println(output);
 	}
 
 	private TestCases getInput() {
@@ -129,14 +128,13 @@ public class SimilarStrings {
 		return toShift - 97;
 	}
 
-	private long getCountOfSimilarStrings(ArrayRangePair substringRange, int[] toSearch) {
+	private long getCountOfSimilarStrings(ArrayRangePair substring, int[] toSearch) {
 		CharacterEquivalents equivalents = new CharacterEquivalents();
-		int[] substring = Arrays.copyOfRange(
-				toSearch, substringRange.getLowIndex(), substringRange.getHighIndex());
+		final int substringLength = substring.getHighIndex() - substring.getLowIndex();
 
 		long matchCount = 0;
 
-		for(int i = 0; i <= toSearch.length - substring.length; i++) {
+		for(int i = 0; i <= toSearch.length - substringLength; i++) {
 			if(checkSubstringSimilarityAgainstRange(substring, toSearch, i, equivalents)) {
 				matchCount++;
 			}
@@ -146,14 +144,15 @@ public class SimilarStrings {
 	}
 
 	private boolean checkSubstringSimilarityAgainstRange(
-			int[] subString, int[] toSearch, int baseSearchIndex, CharacterEquivalents equivalents) {
+			ArrayRangePair substring, int[] toSearch, int baseSearchIndex, CharacterEquivalents equivalents) {
+		final int substringLength = substring.getHighIndex() - substring.getLowIndex();
 
 		equivalents.reset();
 		boolean result = true;
 
-		for(int i = 0; i < subString.length; i++) {
-			if( ! equivalents.compareOrEstablishEquivalent(
-					subString[i], toSearch[i + baseSearchIndex])) {
+		for(int i = 0; i < substringLength; i++) {
+			if( ! equivalents.areEquivalent(
+					toSearch[substring.getLowIndex() + i], toSearch[i + baseSearchIndex])) {
 				result = false;
 				break;
 			}
