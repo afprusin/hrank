@@ -50,8 +50,10 @@ public class SimilarStrings {
 		private static final int UNSET = -1;
 		private int[] equivalents = new int[10];
 		private int[] reverseEquivalents = new int[10];
+		private int[] blank = new int[10];
 
 		CharacterEquivalents() {
+			Arrays.fill(blank, UNSET);
 			reset();
 		}
 
@@ -71,8 +73,8 @@ public class SimilarStrings {
 		}
 
 		void reset() {
-			Arrays.fill(equivalents, UNSET);
-			Arrays.fill(reverseEquivalents, UNSET);
+			System.arraycopy(blank, 0, equivalents, 0, 10);
+			System.arraycopy(blank, 0, reverseEquivalents, 0, 10);
 		}
 	}
 
@@ -95,8 +97,7 @@ public class SimilarStrings {
 		String inputLine;
 		List<ArrayRangePair> substrings = new ArrayList<>();
 		int[] toSearch;
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/SimilarStringsSample")))) {
-			//try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
 			final String[] metadata = reader.readLine().trim().split(" ");
 			toSearch = convertInputLineToIndexArray(reader.readLine().trim());
 
@@ -135,9 +136,10 @@ public class SimilarStrings {
 		final int substringLength = substring.getHighIndex() - substring.getLowIndex();
 
 		long matchCount = 0;
-
-		for(int i = 0; i <= toSearch.length - substringLength; i++) {
-			if(checkSubstringSimilarityAgainstRange(toSearch, substring.getLowIndex(), i, substringLength, equivalents)) {
+		final int lastValidIndex = toSearch.length - substringLength;
+		for(int i = 0; i <= lastValidIndex; i++) {
+			if(checkSubstringSimilarityAgainstRange(
+					toSearch, substring.getLowIndex(), i, substringLength, equivalents)) {
 				matchCount++;
 			}
 		}
@@ -145,19 +147,17 @@ public class SimilarStrings {
 		return matchCount;
 	}
 
-	private boolean checkSubstringSimilarityAgainstRange(int[] toSearch, int substringIndex, int toSearchIndex, int length, CharacterEquivalents equivalents) {
-
+	private boolean checkSubstringSimilarityAgainstRange(
+			int[] toSearch, int substringIndex, int toSearchIndex, int length, CharacterEquivalents equivalents) {
 		equivalents.reset();
-		boolean result = true;
 
 		for(int i = 0; i < length; i++) {
-			if( ! equivalents.areEquivalent(
-					toSearch[substringIndex + i], toSearch[toSearchIndex + i])) {
-				result = false;
-				break;
+			if( ! equivalents.areEquivalent(toSearch[substringIndex], toSearch[toSearchIndex])) {
+				return false;
 			}
+			substringIndex++;
+			toSearchIndex++;
 		}
-
-		return result;
+		return true;
 	}
 }
