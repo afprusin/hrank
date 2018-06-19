@@ -3,9 +3,7 @@ package com.ohumbrella.hrank.algorithms.strings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class SimilarStrings {
 
@@ -46,6 +44,38 @@ public class SimilarStrings {
 		}
 	}
 
+	private class SubstringHash {
+		private int encounters;
+		private int hash;
+
+		public SubstringHash(int encounters, int hash) {
+			this.encounters = encounters;
+			this.hash = hash;
+		}
+
+		public int getEncounters() {
+			return encounters;
+		}
+
+		public int getHash() {
+			return hash;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			SubstringHash that = (SubstringHash) o;
+			return encounters == that.encounters &&
+					hash == that.hash;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(encounters, hash);
+		}
+	}
+
 	private class CharacterEquivalents {
 		private static final int UNSET = -1;
 		private int[] equivalents = new int[10];
@@ -78,26 +108,30 @@ public class SimilarStrings {
 		}
 	}
 
+	private static final int HASHING_CHARACTER_REQUIREMENT = 4;
+
 	public static void main(String[] args) {
+		long start = System.nanoTime();
 		new SimilarStrings().performSolution();
+		long end = System.nanoTime();
+		System.out.println((end - start) / (double)1000000000 + " seconds");
 	}
 
 	public void performSolution() {
 		TestCases testCases = getInput();
+		Map<Integer, List<Integer>> hashedIndexes = getIndexesGroupedByHash(testCases.toSearch);
 
-		StringBuilder output = new StringBuilder();
 		for(ArrayRangePair substring : testCases.getSubstrings()) {
-			output.append(getCountOfSimilarStrings(substring, testCases.getToSearch()));
-			output.append(System.lineSeparator());
+			System.out.println(getCountOfSimilarStrings(substring, testCases.getToSearch(), hashedIndexes));
 		}
-		System.out.println(output.toString());
 	}
 
 	private TestCases getInput() {
 		String inputLine;
 		List<ArrayRangePair> substrings = new ArrayList<>();
 		int[] toSearch;
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+		//try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/SimilarStrings11")))) {
 			final String[] metadata = reader.readLine().trim().split(" ");
 			toSearch = convertInputLineToIndexArray(reader.readLine().trim());
 
@@ -131,16 +165,96 @@ public class SimilarStrings {
 		return toShift - 97;
 	}
 
-	private long getCountOfSimilarStrings(ArrayRangePair substring, int[] toSearch) {
+	private Map<Integer, List<Integer>> getIndexesGroupedByHash(int[] toIndex) {
+		Map<Integer, List<Integer>> indexesByHash = new HashMap<>();
+
+		for(int i = 0; i < toIndex.length; i++) {
+			final int baseValue = toIndex[i];
+			int encounters = 0;
+			int j = i + 1;
+			int lastIndex = i;
+			int currentHash = 0;
+			while(j < toIndex.length) {
+				if(toIndex[j] == baseValue) {
+					encounters++;
+					currentHash = 31 * currentHash + (j - lastIndex);
+
+					indexesByHash.computeIfAbsent(
+							Objects.hash(encounters, currentHash),
+							key -> new ArrayList<>()).add(i);
+
+					lastIndex = j;
+				}
+				j++;
+
+				if(encounters == HASHING_CHARACTER_REQUIREMENT) {
+					break;
+				}
+			}
+		}
+
+		return indexesByHash;
+	}
+
+	private Optional<SubstringHash> getSubstringHash(int[] toHash, int startIndexInclusive, int endIndexExclusive) {
+		final int baseValue = toHash[startIndexInclusive];
+		Optional<SubstringHash> result = Optional.empty();
+
+		int encounters = 0;
+		int lastIndex = startIndexInclusive;
+		int i = startIndexInclusive + 1;
+		int currentHash = 0;
+		while(i < endIndexExclusive) {
+			if(toHash[i] == baseValue) {
+				encounters++;
+				currentHash = 31 * currentHash + (i - lastIndex);
+				lastIndex = i;
+			}
+			i++;
+			if(encounters >= HASHING_CHARACTER_REQUIREMENT) {
+				break;
+			}
+		}
+
+		if(encounters > 0) {
+			result = Optional.of(new SubstringHash(encounters, currentHash));
+		}
+
+		return result;
+	}
+
+	private long getCountOfSimilarStrings(ArrayRangePair substring, int[] toSearch, Map<Integer, List<Integer>> indexesByHash) {
 		CharacterEquivalents equivalents = new CharacterEquivalents();
 		final int substringLength = substring.getHighIndex() - substring.getLowIndex();
+		final Optional<SubstringHash> substringHash =
+				getSubstringHash(toSearch, substring.getLowIndex(), substring.getHighIndex());
 
 		long matchCount = 0;
 		final int lastValidIndex = toSearch.length - substringLength;
-		for(int i = 0; i <= lastValidIndex; i++) {
-			if(checkSubstringSimilarityAgainstRange(
-					toSearch, substring.getLowIndex(), i, substringLength, equivalents)) {
-				matchCount++;
+
+		if(substringHash.isPresent()) {
+			List<Integer> indexesToSearch = indexesByHash.get(substringHash.hashCode());
+			if(indexesToSearch == null) {
+				matchCount = 1;
+			}
+			else {
+				for (Integer startingIndex : indexesToSearch) {
+					if (startingIndex > lastValidIndex) {
+						continue;
+					}
+					if (checkSubstringSimilarityAgainstRange(
+							toSearch, substring.getLowIndex(), startingIndex, substringLength, equivalents)) {
+						matchCount++;
+					}
+				}
+			}
+		}
+		else {
+			for (int i = 0; i <= lastValidIndex; i++) {
+				if (checkSubstringSimilarityAgainstRange(
+						toSearch, substring.getLowIndex(), i, substringLength, equivalents)) {
+					matchCount++;
+				}
 			}
 		}
 
