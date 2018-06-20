@@ -1,4 +1,4 @@
-package com.ohumbrella.hrank.algorithms.hrank.compete.w38;
+package com.ohumbrella.w38;
 
 import java.io.BufferedReader;
 import java.io.IOException;
