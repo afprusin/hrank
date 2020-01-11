@@ -4,42 +4,42 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SuperFunctionalStrings {
 
-    private enum Letter {
-        A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z;
+    private static final long MODULO_CUTOFF = 1000000007;
 
-        private static final Letter[] values = Letter.values();
+    private static class InputWindow {
+        private int[] hashHistory;
+        private int length;
+        private int hashCode;
 
-        public static Letter get(int characterValue) {
-            return values[characterValue - 97];
-        }
-    }
-
-    private static class TokenTraversal {
-        private Map<Letter, TokenTraversal> traversal = new EnumMap<>(Letter.class);
-
-        public boolean contains(Letter toPut) {
-            return traversal.containsKey(toPut);
+        public InputWindow(int[] hashHistory, int length) {
+            this.hashHistory = hashHistory;
+            this.length = length;
+            this.hashCode = hashHistory[length - 1];
         }
 
-        public TokenTraversal put(Letter toPut) {
-            if (!traversal.containsKey(toPut)) {
-                TokenTraversal nextNode = new TokenTraversal();
-                traversal.put(toPut, nextNode);
-                return nextNode;
-            } else {
-                return traversal.get(toPut);
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            // For now, let's assume comparisons will only happen between InputWindows
+            final InputWindow otherSafe = (InputWindow)other;
+            if (otherSafe.length != this.length) {
+                return false;
             }
+            for (int i = length - 1; i >= 0; i--) {
+                if (this.hashHistory[i] != otherSafe.hashHistory[i]) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 
@@ -48,47 +48,29 @@ public class SuperFunctionalStrings {
         int[][] results;
 
         public ResultStore(int maxInputLength) {
-            System.out.println(maxInputLength);
             this.results = new int[maxInputLength][26];
-            for (int[] row : results) {
-                Arrays.fill(row, -1);
-            }
 
+            BigInteger currentValue;
             for (int i = 1; i <= maxInputLength; i++) {
-                long currentValue = i;
-                for (int j = 1; j <= 12; j++)  {
-                    if (j > 1) {
-                        currentValue *= i;
-                    }
-                    results[i - 1][j - 1] = (int)currentValue % MODULO_CUTOFF;
+                BigInteger currentMultiple = BigInteger.valueOf(i);
+                currentValue = BigInteger.ONE;
+                for (int j = 1; j <= 26; j++)  {
+                    currentValue = currentValue.multiply(currentMultiple);
+
+                    results[i - 1][j - 1] = currentValue.mod(bigModulo).intValueExact();
                 }
             }
-
         }
 
         public int getFunctionResult(int inputLength, int letters) {
-            final int storedValue = results[inputLength - 1][letters - 1];
-
-            if (storedValue == -1) {
-                final int calculatedValue =
-                        BigInteger.valueOf(inputLength)
-                                .pow(letters)
-                                .mod(bigModulo)
-                                .intValueExact();
-                results[inputLength - 1][letters - 1] = calculatedValue;
-                return calculatedValue;
-            } else {
-                return storedValue;
-            }
+            return results[inputLength - 1][letters - 1];
         }
     }
 
-    private static final int MODULO_CUTOFF = 1000000007;
-
     public List<Integer> solveProblem() {
-        List<String> problemInput = getInput();
+        List<byte[]> problemInput = getInput();
         final int maxStringLength = problemInput.stream()
-                .map(String::length)
+                .map(input -> input.length)
                 .max(Integer::compareTo)
                 .orElseThrow(IllegalStateException::new);
         ResultStore results = new ResultStore(maxStringLength);
@@ -96,16 +78,20 @@ public class SuperFunctionalStrings {
         return getFunctionSum(problemInput, results);
     }
 
-    private List<String> getInput() {
-        List<String> input = new ArrayList<>();
+    private List<byte[]> getInput() {
+        List<byte[]> input = new ArrayList<>();
         int inputLines = 0;
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
-            // Skip metadata line
             inputLines = Integer.parseInt(reader.readLine());
 
             for (int i = 0; i < inputLines; i++) {
-                input.add(reader.readLine());
+                final String line = reader.readLine();
+                final byte[] convertedLine = new byte[line.length()];
+                for (int j = 0; j < line.length(); j++) {
+                    convertedLine[j] = (byte)(line.charAt(j) - 97);
+                }
+                input.add(convertedLine);
             }
         } catch (IOException e) {
             throw new IllegalStateException("Unable to read input.", e);
@@ -114,44 +100,58 @@ public class SuperFunctionalStrings {
         return input;
     }
 
-    private List<Integer> getFunctionSum(List<String> inputCases, ResultStore results) {
+    private List<Integer> getFunctionSum(List<byte[]> inputCases, ResultStore results) {
         return inputCases.stream()
                 .map(currentCase -> getSumForSingleCase(currentCase, results))
                 .collect(Collectors.toList());
     }
 
-    private int getSumForSingleCase(String singleCase, ResultStore results) {
+    private int getSumForSingleCase(byte[] singleCase, ResultStore results) {
         int currentSum = 0;
-        TokenTraversal traversalRoot = new TokenTraversal();
-        Set<Letter> usedLetters = EnumSet.noneOf(Letter.class);
-        int usedCharacterCount = 0;
+        Set<InputWindow> usedSubstrings = new HashSet<>();
 
-        for (int i = 0; i < singleCase.length(); i++) {
-            TokenTraversal currentTraversal = traversalRoot;
-            usedLetters.clear();
-            usedCharacterCount = 0;
+        int[] characterCounts = new int[singleCase.length];
 
-            for (int j = i; j < singleCase.length(); j++) {
-                final char currentChar = singleCase.charAt(j);
-                final Letter currentLetter = Letter.get(currentChar);
+        for (int i = 0; i < singleCase.length; i++) {
+            //TODO: move to method
+            // Get the sequential hash values for each character in the string
+            int[] hashcodes = new int[singleCase.length - i];
+            int currentHash = 1;
+            boolean[] usedCharacters = new boolean[26];
+            int usedCharacterCount = 0;
 
-                if (usedLetters.add(currentLetter)) {
+            // Pre-load values for this parent substring
+            for (int j = i; j < singleCase.length; j++) {
+                final byte currentCharacter = singleCase[j];
+                currentHash = currentHash * 31 + currentCharacter;
+                hashcodes[j - i] = currentHash;
+                if (!usedCharacters[currentCharacter]) {
+                    usedCharacters[currentCharacter] = true;
                     usedCharacterCount++;
                 }
-                if (!currentTraversal.contains(currentLetter)) {
-                    final int length = j - i + 1;
-                    currentSum += results.getFunctionResult(length, usedCharacterCount);
+                characterCounts[j] = usedCharacterCount;
+            }
 
-                    while (currentSum >= MODULO_CUTOFF) {
+            for (int j = singleCase.length; j > i; j--) {
+                if (alreadyProcessed(usedSubstrings, hashcodes, j - i)) {
+                    // TODO: Need to make sure these values match up; I've been one-off so many times it's stupid
+                    currentSum += results.getFunctionResult(j - i, characterCounts[j - 1]);
+                    if (currentSum > MODULO_CUTOFF) {
                         currentSum -= MODULO_CUTOFF;
                     }
+                } else {
+                    break;
                 }
-
-                currentTraversal = currentTraversal.put(currentLetter);
             }
         }
 
+        System.out.println(currentSum);
+
         return currentSum;
+    }
+
+    private boolean alreadyProcessed(Set<InputWindow> usedSubstrings, int[] hashcodes, int length) {
+        return usedSubstrings.add(new InputWindow(hashcodes, length));
     }
 
     public static void main(String[] args) {
