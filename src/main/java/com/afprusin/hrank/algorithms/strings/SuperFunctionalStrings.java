@@ -4,42 +4,45 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
+
+// TODO: This still exceeds time/memory limits for H.R. - might not be possible in Java with some extreme creativity
 
 public class SuperFunctionalStrings {
 
     private static final long MODULO_CUTOFF = 1000000007;
 
-    private static class InputWindow {
-        private int[] hashHistory;
-        private int length;
-        private int hashCode;
+    private static class TextMap {
+        private final Object[] byCharacter = new Object[26];
 
-        public InputWindow(int[] hashHistory, int length) {
-            this.hashHistory = hashHistory;
-            this.length = length;
-            this.hashCode = hashHistory[length - 1];
-        }
+        public int addToSum(byte[] text, ResultStore store, int first, int sum) {
+            boolean[] usedChars = new boolean[26];
+            int usedCharCount = 0;
+            Object[] currentNodes = byCharacter;
 
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            // For now, let's assume comparisons will only happen between InputWindows
-            final InputWindow otherSafe = (InputWindow)other;
-            if (otherSafe.length != this.length) {
-                return false;
-            }
-            for (int i = length - 1; i >= 0; i--) {
-                if (this.hashHistory[i] != otherSafe.hashHistory[i]) {
-                    return false;
+            for (int i = first; i < text.length; i++) {
+                final byte currentCharacter = text[i];
+                if (!usedChars[currentCharacter]) {
+                    usedChars[currentCharacter] = true;
+                    usedCharCount++;
                 }
+                if (currentNodes[currentCharacter] == null) {
+                    currentNodes[currentCharacter] = new Object[26];
+                    sum = getUpdatedSum(store, (i - first) + 1, usedCharCount, sum);
+                }
+                currentNodes = (Object[])currentNodes[currentCharacter];
             }
-            return true;
+            return sum;
+        }
+
+        private int getUpdatedSum(ResultStore store, int length, int characterCount, int sum) {
+            sum += store.get(length, characterCount);
+            if (sum > MODULO_CUTOFF) {
+                sum -= MODULO_CUTOFF;
+            }
+            return sum;
         }
     }
 
@@ -62,7 +65,7 @@ public class SuperFunctionalStrings {
             }
         }
 
-        public int getFunctionResult(int inputLength, int letters) {
+        public int get(int inputLength, int letters) {
             return results[inputLength - 1][letters - 1];
         }
     }
@@ -80,7 +83,7 @@ public class SuperFunctionalStrings {
 
     private List<byte[]> getInput() {
         List<byte[]> input = new ArrayList<>();
-        int inputLines = 0;
+        int inputLines;
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             inputLines = Integer.parseInt(reader.readLine());
@@ -106,52 +109,15 @@ public class SuperFunctionalStrings {
                 .collect(Collectors.toList());
     }
 
-    private int getSumForSingleCase(byte[] singleCase, ResultStore results) {
+    private int getSumForSingleCase(byte[] singleCase, ResultStore store) {
         int currentSum = 0;
-        Set<InputWindow> usedSubstrings = new HashSet<>();
-
-        int[] characterCounts = new int[singleCase.length];
+        TextMap usedSubstrings = new TextMap();
 
         for (int i = 0; i < singleCase.length; i++) {
-            //TODO: move to method
-            // Get the sequential hash values for each character in the string
-            int[] hashcodes = new int[singleCase.length - i];
-            int currentHash = 1;
-            boolean[] usedCharacters = new boolean[26];
-            int usedCharacterCount = 0;
-
-            // Pre-load values for this parent substring
-            for (int j = i; j < singleCase.length; j++) {
-                final byte currentCharacter = singleCase[j];
-                currentHash = currentHash * 31 + currentCharacter;
-                hashcodes[j - i] = currentHash;
-                if (!usedCharacters[currentCharacter]) {
-                    usedCharacters[currentCharacter] = true;
-                    usedCharacterCount++;
-                }
-                characterCounts[j] = usedCharacterCount;
-            }
-
-            for (int j = singleCase.length; j > i; j--) {
-                if (alreadyProcessed(usedSubstrings, hashcodes, j - i)) {
-                    // TODO: Need to make sure these values match up; I've been one-off so many times it's stupid
-                    currentSum += results.getFunctionResult(j - i, characterCounts[j - 1]);
-                    if (currentSum > MODULO_CUTOFF) {
-                        currentSum -= MODULO_CUTOFF;
-                    }
-                } else {
-                    break;
-                }
-            }
+            currentSum = usedSubstrings.addToSum(singleCase, store, i, currentSum);
         }
 
-        System.out.println(currentSum);
-
         return currentSum;
-    }
-
-    private boolean alreadyProcessed(Set<InputWindow> usedSubstrings, int[] hashcodes, int length) {
-        return usedSubstrings.add(new InputWindow(hashcodes, length));
     }
 
     public static void main(String[] args) {
